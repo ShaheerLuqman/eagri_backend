@@ -29,9 +29,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-s31wsrzp8k2k5k0icf(_zhs@wu7($1h$sf77q7jw6x)^#!4a0='
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+# Split the ALLOWED_HOSTS environment variable by commas if it exists
+# Otherwise, use a default list of hosts
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'eagri-backend.vercel.app,localhost,127.0.0.1').split(',')
 
 
 # Application definition
