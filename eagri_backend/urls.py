@@ -23,5 +23,6 @@ def index(request):
 
 urlpatterns = [
     path('', index, name='index'),
-    path('api/users/', include('users.urls')),
+    path('users/', include('users.urls')),
+    path('e_loan/', include('E_Loan.urls')),
 ]

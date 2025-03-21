@@ -51,6 +51,18 @@ INSTALLED_APPS = [
     
     # Local apps
     'users',
+    'E_Loan',
+    'E_Munshi',
+    'E_Inventory',
+    'E_Mundi',
+    'E_Market',
+    'Settlements',
+    'E_Advisor',
+    'E_Rental',
+    'E_Food_Supply',
+    'E_Transport',
+    'E_Warehouse',
+    'E_Orders',
 ]
 
 MIDDLEWARE = [
