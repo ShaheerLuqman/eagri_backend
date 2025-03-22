@@ -25,4 +25,5 @@ urlpatterns = [
     path('', index, name='index'),
     path('users/', include('users.urls')),
     path('e_loan/', include('E_Loan.urls')),
+    path('e_market/', include('E_Market.urls')),
 ]
