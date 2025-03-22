@@ -83,3 +83,41 @@ class ProductViewSet(viewsets.ModelViewSet):
         ).exclude(discounted_price=0)
         serializer = self.get_serializer(products, many=True)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def by_category(self, request, category=None):
+        if not category:
+            return Response(
+                {"error": "Category is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        products = self.get_queryset().filter(category=category)
+        if not products.exists():
+            return Response(
+                {"error": f"No products found in category: {category}"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+            
+        serializer = self.get_serializer(products, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        
+        # Get top 3 related products from the same category
+        related_products = Product.objects.filter(
+            category=instance.category
+        ).exclude(
+            id=instance.id
+        ).order_by('-created_at')[:3]
+        
+        related_serializer = self.get_serializer(related_products, many=True)
+        
+        response_data = {
+            'product': serializer.data,
+            'related_products': related_serializer.data
+        }
+        
+        return Response(response_data)
