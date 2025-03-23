@@ -4,6 +4,9 @@ from rest_framework.decorators import action
 from django.db.models import Q
 from .models import  Product
 from .serializers import ProductSerializer
+from .models import Product, Order
+from .serializers import ProductSerializer, OrderSerializer
+import uuid
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
@@ -81,10 +84,11 @@ class ProductViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'])
-    def by_category(self, request, category=None):
+    def by_category(self, request):
+        category = request.query_params.get('category', None)
         if not category:
             return Response(
-                {"error": "Category is required"},
+                {"error": "Category parameter is required"},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -117,3 +121,76 @@ class ProductViewSet(viewsets.ModelViewSet):
         }
         
         return Response(response_data)
+
+
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+
+    def create(self, request, *args, **kwargs):
+        try:
+            # Validate required fields
+            required_fields = ['product', 'quantity', 'shipping_address', 'contact_number', 'payment_method']
+            for field in required_fields:
+                if field not in request.data:
+                    return Response(
+                        {"error": f"{field} is required"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+            # Get product and validate stock
+            product = Product.objects.get(id=request.data['product'])
+            quantity = int(request.data['quantity'])
+
+            if product.stock_quantity < quantity:
+                return Response(
+                    {"error": "Insufficient stock available"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Calculate prices
+            unit_price = product.discounted_price if product.discounted_price else product.price
+            total_amount = unit_price * quantity
+
+            # Create order data
+            order_data = {
+                **request.data,
+                'transaction_id': str(uuid.uuid4())[:10],
+                'user_id': request.user.id if request.user.is_authenticated else None,
+                'unit_price': unit_price,
+                'total_amount': total_amount,
+            }
+
+            serializer = self.get_serializer(data=order_data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+
+            # Update product stock
+            product.stock_quantity -= quantity
+            product.save()
+
+            return Response(
+                {"message": "Order placed successfully", "data": serializer.data},
+                status=status.HTTP_201_CREATED
+            )
+
+        except Product.DoesNotExist:
+            return Response(
+                {"error": "Product not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        
+        # Filter by user if authenticated
+        if request.user.is_authenticated:
+            queryset = queryset.filter(user_id=request.user.id)
+            
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)

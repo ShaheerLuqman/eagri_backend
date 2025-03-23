@@ -1,6 +1,6 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
-from .views import ProductViewSet
+from .views import ProductViewSet, OrderViewSet
 
 router = DefaultRouter()
 
@@ -11,8 +11,8 @@ urlpatterns = [
         'post': 'create'
     }), name='product-list'),
     
-    # Get products by category
-    path('products/category/<str:category>/', ProductViewSet.as_view({
+    # Get products by category (using query parameter now)
+    path('products/by-category/', ProductViewSet.as_view({
         'get': 'by_category'
     }), name='category-products'),
     
@@ -22,4 +22,14 @@ urlpatterns = [
         'put': 'update',
         'delete': 'destroy'
     }), name='product-detail'),
+
+    # Order routes
+    path('orders/', OrderViewSet.as_view({
+        'get': 'list',
+        'post': 'create'
+    }), name='order-list'),
+
+    path('orders/<int:pk>/', OrderViewSet.as_view({
+        'get': 'retrieve'
+    }), name='order-detail'),
 ]
