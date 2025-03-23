@@ -2,12 +2,8 @@ from rest_framework import viewsets, status, filters
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.db.models import Q
-from .models import MarketItem, Product
-from .serializers import MarketItemSerializer, ProductSerializer
-
-class MarketItemViewSet(viewsets.ModelViewSet):
-    queryset = MarketItem.objects.all()
-    serializer_class = MarketItemSerializer
+from .models import  Product
+from .serializers import ProductSerializer
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()

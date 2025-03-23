@@ -1,10 +1,5 @@
 from rest_framework import serializers
-from .models import MarketItem, Product
-
-class MarketItemSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = MarketItem
-        fields = '__all__'
+from .models import Product
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
