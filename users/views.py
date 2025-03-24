@@ -2,11 +2,14 @@ from rest_framework import status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
-from django.contrib.auth import authenticate
-from .serializers import SignupSerializer, LoginSerializer, UserSerializer
+from django.contrib.auth import authenticate, get_user_model
+from .serializers import SignupSerializer, LoginSerializer, UserSerializer, PhoneLoginSerializer
 from django.core.mail import send_mail
 from django.conf import settings
 import random
+
+# Add this line after imports
+User = get_user_model()
 
 class SignupView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -34,20 +37,51 @@ class LoginView(APIView):
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
-            user = authenticate(
-                username=serializer.validated_data['username'],
-                password=serializer.validated_data['password']
-            )
-            if user:
-                Token.objects.filter(user=user).delete()
-                token = Token.objects.create(user=user)
-                return Response({
-                    'message': 'Login successful',
-                    'data': {
-                        'user': UserSerializer(user).data,
-                        'token': token.key
-                    }
-                })
+            try:
+                user = User.objects.get(email=serializer.validated_data['email'])
+                if user.check_password(serializer.validated_data['password']):
+                    Token.objects.filter(user=user).delete()
+                    token = Token.objects.create(user=user)
+                    return Response({
+                        'message': 'Login successful',
+                        'data': {
+                            'user': UserSerializer(user).data,
+                            'token': token.key
+                        }
+                    })
+            except User.DoesNotExist:
+                pass
+                
+            return Response({
+                'message': 'Invalid credentials',
+                'data': None
+            }, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({
+            'message': 'Login failed',
+            'data': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+class PhoneLoginView(APIView):
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        serializer = PhoneLoginSerializer(data=request.data)
+        if serializer.is_valid():
+            try:
+                user = User.objects.get(phone_number=serializer.validated_data['phone_number'])
+                if user.check_password(serializer.validated_data['password']):
+                    Token.objects.filter(user=user).delete()
+                    token = Token.objects.create(user=user)
+                    return Response({
+                        'message': 'Login successful',
+                        'data': {
+                            'user': UserSerializer(user).data,
+                            'token': token.key
+                        }
+                    })
+            except User.DoesNotExist:
+                pass
+                
             return Response({
                 'message': 'Invalid credentials',
                 'data': None
