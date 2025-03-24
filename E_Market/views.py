@@ -7,6 +7,10 @@ from .serializers import ProductSerializer
 from .models import Product, Order
 from .serializers import ProductSerializer, OrderSerializer
 import uuid
+import cloudinary
+from PIL import Image
+from io import BytesIO
+import cloudinary.uploader
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
@@ -39,6 +43,39 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         return queryset
 
+    def compress_image(self, image):
+        img = Image.open(image)
+        
+        # Resize if image is larger than 500x500 while maintaining aspect ratio
+        if img.width > 500 or img.height > 500:
+            # Calculate aspect ratio
+            aspect_ratio = img.width / img.height
+            
+            if img.width > img.height:
+                new_width = 500
+                new_height = int(500 / aspect_ratio)
+            else:
+                new_height = 500
+                new_width = int(500 * aspect_ratio)
+                
+            img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+        
+        # Convert to RGB if image is in RGBA mode
+        if img.mode == 'RGBA':
+            img = img.convert('RGB')
+            
+        # Create a BytesIO object to store the compressed image
+        output = BytesIO()
+        
+        # Save the image with compression
+        img.save(output, 
+                format='JPEG', 
+                quality=90,
+                optimize=True)
+        output.seek(0)
+        
+        return output
+
     def create(self, request, *args, **kwargs):
         try:
             # Validate required fields
@@ -49,6 +86,21 @@ class ProductViewSet(viewsets.ModelViewSet):
                         {f"error": f"{field} is required"},
                         status=status.HTTP_400_BAD_REQUEST
                     )
+
+            # Handle image upload to Cloudinary
+            image = request.FILES.get('image')
+            if image:
+                # Compress image before upload
+                compressed_image = self.compress_image(image)
+                
+                # Upload compressed image
+                upload_result = cloudinary.uploader.upload(
+                    compressed_image,
+                    folder='eagri/products',
+                    use_filename=True,
+                    unique_filename=True
+                )
+                request.data['image_url'] = upload_result['secure_url']
 
             # Validate price and discounted_price
             if 'discounted_price' in request.data and request.data['discounted_price']:
