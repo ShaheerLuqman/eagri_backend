@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 # Create your models here. 
 
@@ -9,6 +10,8 @@ class LoanRequest(models.Model):
         ('working_capital', 'Working Capital Loan'),
     )
 
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='loan_requests')
+    bank_name = models.CharField(max_length=100, default="Bank")
     name = models.CharField(max_length=100)
     cnic = models.CharField(max_length=15)
     contact = models.CharField(max_length=15)
@@ -25,4 +28,4 @@ class LoanRequest(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
-        return f"{self.name} - {self.loan_type} - {self.loan_amount}" 
+        return f"{self.name} - {self.loan_type} - {self.loan_amount}"
