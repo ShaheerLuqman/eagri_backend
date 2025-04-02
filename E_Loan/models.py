@@ -10,6 +10,15 @@ class LoanRequest(models.Model):
         ('working_capital', 'Working Capital Loan'),
     )
 
+    LOAN_STATUS = (
+        ('pending', 'Pending'), # For newly created loan requests
+        ('processing', 'Processing'), # When the loan is under review
+        ('approved', 'Approved'), # When the loan is approved but not yet fulfilled
+        ('rejected', 'Rejected'), # When the loan request is declined
+        ('fulfilled', 'Fulfilled'), # When the loan amount is disbursed
+        ('completed', 'Completed'), # When the loan is fully paid back
+    )
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='loan_requests')
     bank_name = models.CharField(max_length=100, default="Bank")
     name = models.CharField(max_length=100)
@@ -25,6 +34,7 @@ class LoanRequest(models.Model):
     title = models.CharField(max_length=200)
     loan_amount = models.DecimalField(max_digits=12, decimal_places=2)
     desired_loan_period = models.IntegerField(help_text="Loan period in months")
+    status = models.CharField(max_length=20, choices=LOAN_STATUS, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
