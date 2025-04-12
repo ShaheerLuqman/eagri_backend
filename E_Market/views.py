@@ -61,7 +61,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
         
         # Convert to RGB if image is in RGBA mode
-        if img.mode == 'RGBA':
+        if img.mode != 'RGB':
             img = img.convert('RGB')
             
         # Create a BytesIO object to store the compressed image
