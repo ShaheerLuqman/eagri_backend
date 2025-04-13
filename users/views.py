@@ -1,9 +1,13 @@
-from rest_framework import status, permissions
+from rest_framework import status, permissions, generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate, get_user_model
-from .serializers import SignupSerializer, LoginSerializer, UserSerializer, PhoneLoginSerializer
+from .serializers import (
+    SignupSerializer, LoginSerializer, UserSerializer, PhoneLoginSerializer,
+    BankAccountSerializer, WalletSerializer, PaymentInformationSerializer, TransactionSerializer
+)
+from .models import BankAccount, Wallet, PaymentInformation, Transaction
 from django.core.mail import send_mail
 from django.conf import settings
 import random
@@ -189,3 +193,67 @@ class ResetPasswordView(APIView):
             'message': 'Password reset successfully',
             'data': None
         }, status=status.HTTP_200_OK)
+
+# BankAccount views
+class BankAccountListCreateView(generics.ListCreateAPIView):
+    serializer_class = BankAccountSerializer
+    
+    def get_queryset(self):
+        return BankAccount.objects.filter(user=self.request.user)
+    
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class BankAccountDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = BankAccountSerializer
+    
+    def get_queryset(self):
+        return BankAccount.objects.filter(user=self.request.user)
+
+# Wallet views
+class WalletListCreateView(generics.ListCreateAPIView):
+    serializer_class = WalletSerializer
+    
+    def get_queryset(self):
+        return Wallet.objects.filter(user=self.request.user)
+    
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class WalletDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = WalletSerializer
+    
+    def get_queryset(self):
+        return Wallet.objects.filter(user=self.request.user)
+
+# PaymentInformation views
+class PaymentInformationListCreateView(generics.ListCreateAPIView):
+    serializer_class = PaymentInformationSerializer
+    
+    def get_queryset(self):
+        return PaymentInformation.objects.filter(user=self.request.user)
+    
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class PaymentInformationDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = PaymentInformationSerializer
+    
+    def get_queryset(self):
+        return PaymentInformation.objects.filter(user=self.request.user)
+
+# Transaction views
+class TransactionListCreateView(generics.ListCreateAPIView):
+    serializer_class = TransactionSerializer
+    
+    def get_queryset(self):
+        return Transaction.objects.filter(user=self.request.user)
+    
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class TransactionDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = TransactionSerializer
+    
+    def get_queryset(self):
+        return Transaction.objects.filter(user=self.request.user)
