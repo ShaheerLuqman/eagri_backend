@@ -39,7 +39,7 @@ pip install -r requirements.txt
 
 ### 4. Configure Environment Variables
 
-Place the provided `.env` file  in the root directory of the project. This file should contain:
+Place the provided `.env` file in the root directory of the project. This file should contain:
 
 - `SECRET_KEY`: Django secret key
 - `DATABASE_URL`: Neon DB connection string
