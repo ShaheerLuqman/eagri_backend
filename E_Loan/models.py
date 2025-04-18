@@ -115,6 +115,27 @@ class LoanApproval(models.Model):
         auto_now=True,
         help_text="Timestamp when the approval record was last updated"
     )
+    amount_used = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Amount paid by the user"
+    )
+    amount_paid = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Amount paid by the user"
+    )
+    amount_payable = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Amount paid by the user"
+    )
 
     class Meta:
         db_table = 'loan_approvals'
