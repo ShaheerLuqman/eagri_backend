@@ -5,16 +5,17 @@ from django.conf import settings
 
 class LoanRequest(models.Model):
     LOAN_TYPES = (
-        ('crop', 'Crop Loan'),
-        ('equipment', 'Equipment Loan'),
-        ('working_capital', 'Working Capital Loan'),
+        ('Personal', 'Personal'),
+        ('Agriculture', 'Agricultural'),
+        ('Business', 'Business'),
+        ('Mortgage', 'Mortgage'),
     )
 
     LOAN_STATUS = (
-        ('pending', 'Pending'),
-        ('approved', 'Approved'),
-        ('rejected', 'Rejected'),
-        ('processing', 'Processing'),
+        ('Pending', 'Pending'),
+        ('Approved', 'Approved'),
+        ('Rejected', 'Rejected'),
+        ('Processing', 'Processing'),
     )
 
     # Primary Key
