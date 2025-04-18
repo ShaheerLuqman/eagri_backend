@@ -284,6 +284,22 @@ class PaymentInformation(models.Model):
         self.amount_deducted = max(0, self.amount_deducted)
         super().save(*args, **kwargs)
 
+def validate_items_array(value):
+    if not isinstance(value, list):
+        return False
+    for item in value:
+        if not isinstance(item, dict):
+            return False
+        if not all(key in item for key in ['name', 'quantity', 'price']):
+            return False
+        if not isinstance(item['name'], str):
+            return False
+        if not isinstance(item['quantity'], (int, float)):
+            return False
+        if not isinstance(item['price'], (int, float)):
+            return False
+    return True
+
 class Transaction(models.Model):
     """Model for storing financial transaction information"""
     
@@ -374,6 +390,11 @@ class Transaction(models.Model):
     updated_at = models.DateTimeField(
         auto_now=True,
         help_text="Timestamp when the transaction record was last updated"
+    )
+    items_array = models.JSONField(
+        default=list,
+        help_text="Array of items associated with the transaction. Each item should have: name, quantity, price, and optional description.",
+        validators=[validate_items_array]
     )
 
     class Meta:
