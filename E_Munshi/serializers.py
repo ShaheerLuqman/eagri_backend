@@ -1,7 +1,19 @@
 from rest_framework import serializers
-from .models import ExampleModel
+from .models import LoanRecord
+from django.contrib.auth import get_user_model
 
-class ExampleModelSerializer(serializers.ModelSerializer):
+User = get_user_model()
+
+class LoanRecordSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ExampleModel
-        fields = '__all__' 
+        model = LoanRecord
+        fields = '__all__'
+        read_only_fields = ('created_at', 'updated_at')
+
+    def validate_user(self, value):
+        try:
+            # Check if user exists
+            User.objects.get(id=value.id)
+            return value
+        except User.DoesNotExist:
+            raise serializers.ValidationError("User with this ID does not exist") 

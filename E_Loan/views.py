@@ -20,6 +20,13 @@ class LoanRequestDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = LoanRequest.objects.all()
     serializer_class = LoanRequestSerializer
 
+class LoanRequestByUserView(generics.ListAPIView):
+    serializer_class = LoanRequestSerializer
+
+    def get_queryset(self):
+        user_id = self.kwargs['user_id']
+        return LoanRequest.objects.filter(user_id=user_id)
+
 class LoanApprovalListCreateView(generics.ListCreateAPIView):
     queryset = LoanApproval.objects.all()
     serializer_class = LoanApprovalSerializer

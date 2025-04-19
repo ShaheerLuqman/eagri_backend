@@ -1,8 +1,12 @@
 from django.urls import path
-from .views import ExampleModelViewSet
-from rest_framework.routers import DefaultRouter
+from .views import LoanRecordViewSet
 
-router = DefaultRouter()
-router.register(r'example', ExampleModelViewSet)
-
-urlpatterns = router.urls 
+urlpatterns = [
+    path('loan-records/', LoanRecordViewSet.as_view({'get': 'list', 'post': 'create'}), name='loan-record-list'),
+    path('loan-records/<int:pk>/', LoanRecordViewSet.as_view({
+        'get': 'retrieve',
+        'put': 'update',
+        'patch': 'partial_update',
+        'delete': 'destroy'
+    }), name='loan-record-detail'),
+]
