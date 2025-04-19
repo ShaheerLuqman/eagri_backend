@@ -1,6 +1,6 @@
 # EAgri Backend
 
-This is the backend  server for the EAgri application, built with Django and PostgreSQL (Neon DB).
+This is the backend  server for the EAgri application, built with Django and PostgreSQL (Neon Database).
 
 ## Prerequisites
 
