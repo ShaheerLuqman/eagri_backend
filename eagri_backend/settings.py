@@ -65,7 +65,6 @@ INSTALLED_APPS = [
     'E_Food_Supply',
     'E_Transport',
     'E_Warehouse',
-    'E_Orders',
 ]
 
 MIDDLEWARE = [
