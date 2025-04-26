@@ -5,7 +5,7 @@ from .views import (
     WalletListCreateView, WalletDetailView,
     PaymentInformationListCreateView, PaymentInformationDetailView,
     TransactionListCreateView, TransactionDetailView,
-    WalletBalanceView
+    WalletBalanceView, UserTransactionsView,
 )
 
 urlpatterns = [
