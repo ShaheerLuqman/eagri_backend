@@ -3,7 +3,8 @@ from .views import (
     CreateLoanRequestView, 
     ListLoanRequestView, 
     LoanRequestDetailView,
-    LoanRequestByUserView
+    LoanRequestByUserView,
+    LoanApprovalView
 )
 
 urlpatterns = [
@@ -12,4 +13,5 @@ urlpatterns = [
     path('get_loan/', ListLoanRequestView.as_view(), name='list-loans'),
     path('get_loan/<int:pk>/', LoanRequestDetailView.as_view(), name='loan-detail'),
     path('get_loan/user/<int:user_id>/', LoanRequestByUserView.as_view(), name='loan-detail-by-user'),
+    path('loan_approve/<int:pk>/', LoanApprovalView.as_view(), name='loan-approval'),
 ]
