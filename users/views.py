@@ -11,6 +11,7 @@ from .models import BankAccount, Wallet, PaymentInformation, Transaction
 from django.core.mail import send_mail
 from django.conf import settings
 import random
+from django.db import models
 
 # Add this line after imports
 User = get_user_model()
@@ -225,6 +226,74 @@ class WalletDetailView(generics.RetrieveUpdateDestroyAPIView):
     
     def get_queryset(self):
         return Wallet.objects.filter(user=self.request.user)
+
+class WalletBalanceView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        try:
+            wallet = Wallet.objects.get(user=request.user)
+            
+            # Calculate total received LOC from loan disbursements
+            total_loc_received = Transaction.objects.filter(
+                user=request.user,
+                transaction_type='loan_disbursement',
+                source='loan',
+                status='completed'
+            ).exclude(
+                purpose__contains='Cash disbursement'
+            ).aggregate(total=models.Sum('amount'))['total'] or 0
+
+            # Calculate total spent from LOC
+            total_loc_spent = Transaction.objects.filter(
+                user=request.user,
+                source='wallet',
+                status='completed',
+                payment_method='wallet'
+            ).aggregate(total=models.Sum('amount'))['total'] or 0
+
+            # Calculate total received cash from loan disbursements
+            total_cash_received = Transaction.objects.filter(
+                user=request.user,
+                transaction_type='loan_disbursement',
+                source='loan',
+                status='completed',
+                purpose__contains='Cash disbursement'
+            ).aggregate(total=models.Sum('amount'))['total'] or 0
+
+            # Calculate total spent from cash balance
+            total_cash_spent = Transaction.objects.filter(
+                user=request.user,
+                source='wallet',
+                status='completed',
+                payment_method='cash'
+            ).aggregate(total=models.Sum('amount'))['total'] or 0
+
+            return Response({
+                'status': 'success',
+                'data': {
+                    'current_balances': {
+                        'total_balance': str(wallet.balance),
+                        'cash_balance': str(wallet.cash_balance),
+                        'line_of_credit': str(wallet.line_of_credit)
+                    },
+                    'line_of_credit_history': {
+                        'total_received': str(total_loc_received),
+                        'total_spent': str(total_loc_spent),
+                        'remaining': str(wallet.line_of_credit)
+                    },
+                    'cash_balance_history': {
+                        'total_received': str(total_cash_received),
+                        'total_spent': str(total_cash_spent),
+                        'remaining': str(wallet.cash_balance)
+                    }
+                }
+            }, status=status.HTTP_200_OK)
+        except Wallet.DoesNotExist:
+            return Response({
+                'status': 'error',
+                'message': 'Wallet not found for this user'
+            }, status=status.HTTP_404_NOT_FOUND)
 
 # PaymentInformation views
 class PaymentInformationListCreateView(generics.ListCreateAPIView):

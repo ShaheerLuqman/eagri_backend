@@ -4,7 +4,8 @@ from .views import (
     BankAccountListCreateView, BankAccountDetailView,
     WalletListCreateView, WalletDetailView,
     PaymentInformationListCreateView, PaymentInformationDetailView,
-    TransactionListCreateView, TransactionDetailView
+    TransactionListCreateView, TransactionDetailView,
+    WalletBalanceView
 )
 
 urlpatterns = [
@@ -21,6 +22,7 @@ urlpatterns = [
     # Wallet endpoints
     path('wallets/', WalletListCreateView.as_view(), name='wallet-list'),
     path('wallets/<int:pk>/', WalletDetailView.as_view(), name='wallet-detail'),
+    path('wallet/balance/', WalletBalanceView.as_view(), name='wallet-balance'),
     
     # Payment Information endpoints
     path('payments/', PaymentInformationListCreateView.as_view(), name='payment-list'),
