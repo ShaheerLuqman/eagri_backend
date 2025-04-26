@@ -1,6 +1,6 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
-from .views import ProductViewSet, OrderViewSet
+from .views import ProductViewSet, OrderViewSet, PlaceOrderView
 
 router = DefaultRouter()
 
@@ -32,4 +32,7 @@ urlpatterns = [
     path('orders/<int:pk>/', OrderViewSet.as_view({
         'get': 'retrieve'
     }), name='order-detail'),
+
+    # Place order with wallet or bank account
+    path('place-order/', PlaceOrderView.as_view(), name='place-order'),
 ]
