@@ -257,3 +257,10 @@ class TransactionDetailView(generics.RetrieveUpdateDestroyAPIView):
     
     def get_queryset(self):
         return Transaction.objects.filter(user=self.request.user)
+
+class UserTransactionsView(generics.ListAPIView):
+    serializer_class = TransactionSerializer
+    
+    def get_queryset(self):
+        user_id = self.kwargs['user_id']
+        return Transaction.objects.filter(user_id=user_id).order_by('-transaction_date')

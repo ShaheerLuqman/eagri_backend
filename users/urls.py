@@ -4,7 +4,8 @@ from .views import (
     BankAccountListCreateView, BankAccountDetailView,
     WalletListCreateView, WalletDetailView,
     PaymentInformationListCreateView, PaymentInformationDetailView,
-    TransactionListCreateView, TransactionDetailView
+    TransactionListCreateView, TransactionDetailView,
+    UserTransactionsView
 )
 
 urlpatterns = [
@@ -29,4 +30,5 @@ urlpatterns = [
     # Transaction endpoints
     path('transactions/', TransactionListCreateView.as_view(), name='transaction-list'),
     path('transactions/<int:pk>/', TransactionDetailView.as_view(), name='transaction-detail'),
+    path('<int:user_id>/transactions/', UserTransactionsView.as_view(), name='user-transactions'),
 ]
