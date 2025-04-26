@@ -5,12 +5,18 @@ from django.db.models import Q
 from .models import  Product
 from .serializers import ProductSerializer
 from .models import Product, Order
-from .serializers import ProductSerializer, OrderSerializer
+from users.models import PaymentInformation, Transaction, Wallet
+from .serializers import ProductSerializer, OrderSerializer, PlaceOrderSerializer
 import uuid
 import cloudinary
 from PIL import Image
 from io import BytesIO
 import cloudinary.uploader
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from django.db import transaction
+from django.utils import timezone
+from users.models import Transaction, PaymentInformation
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
@@ -246,3 +252,116 @@ class OrderViewSet(viewsets.ModelViewSet):
             
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+class PlaceOrderView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        serializer = PlaceOrderSerializer(data=request.data, context={'request': request})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        validated_data = serializer.validated_data
+        product = validated_data['product']
+        quantity = validated_data['quantity']
+        payment_type = validated_data['payment_type']
+        
+        # Calculate amounts
+        unit_price = product.discounted_price or product.price
+        total_amount = unit_price * quantity
+        
+        try:
+            with transaction.atomic():
+                # Create order
+                order = Order.objects.create(
+                    product=product,
+                    user=request.user,
+                    transaction_id=str(uuid.uuid4())[:10],
+                    quantity=quantity,
+                    unit_price=unit_price,
+                    total_amount=total_amount,
+                    shipping_address=validated_data['shipping_address'],
+                    contact_number=validated_data['contact_number'],
+                    status='pending',
+                    payment_status='pending',
+                    payment_method=payment_type
+                )
+
+                # Create transaction record first
+                transaction_record = Transaction.objects.create(
+                    user=request.user,
+                    amount=total_amount,
+                    transaction_type='market_purchase',
+                    source=payment_type.lower(),
+                    payment_method=payment_type.lower(),
+                    purpose=f'Purchase of {product.name}',
+                    status='pending',
+                    items_array=[{
+                        'name': product.name,
+                        'quantity': quantity,
+                        'price': float(unit_price)
+                    }]
+                )
+                
+                # Process payment based on type
+                if payment_type == 'WALLET':
+                    wallet = validated_data['wallet']
+                    
+                    # Create payment information record
+                    payment = PaymentInformation.objects.create(
+                        user=request.user,
+                        amount_deducted=total_amount,
+                        payment_method='wallet',
+                        purpose=f"Order {order.transaction_id}",
+                        status='success',
+                        notes=f"Payment for order {order.transaction_id} using wallet"
+                    )
+                    
+                    # Update wallet balance
+                    wallet.line_of_credit -= total_amount
+                    wallet.save()
+                    
+                    # Update order and transaction status
+                    order.payment_status = 'completed'
+                    order.status = 'processing'
+                    order.save()
+                    
+                    transaction_record.status = 'completed'
+                    transaction_record.save()
+                    
+                elif payment_type == 'BANK':
+                    bank_account = validated_data['bank_account']
+                    
+                    # Create payment information record
+                    payment = PaymentInformation.objects.create(
+                        user=request.user,
+                        amount_deducted=total_amount,
+                        payment_method='card',
+                        purpose=f"Order {order.transaction_id}",
+                        status='pending',
+                        bank_account=bank_account,
+                        notes=f"Payment for order {order.transaction_id} using bank account"
+                    )
+                
+                # Update product stock
+                product.stock_quantity -= quantity
+                product.save()
+                
+                return Response({
+                    'message': 'Order placed successfully',
+                    'data': {
+                        'order_id': order.id,
+                        'transaction_id': order.transaction_id,
+                        'payment_type': payment_type,
+                        'payment_status': order.payment_status,
+                        'total_amount': total_amount,
+                        'transaction_reference': transaction_record.id,
+                        'payment_id': payment.id
+                    }
+                }, status=status.HTTP_201_CREATED)
+                
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
